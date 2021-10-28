@@ -1,5 +1,5 @@
 # FlameControlAndroid
-Flame Control an android app which can be used to connect to an esp32 using BlueTooth Low Energy (BLE) to control the color an RGB LED. This is an effort to save some time for newbies which are looking to get into BLE Development.
+Flame Control an android app which can be used to connect to an esp32 using BlueTooth Low Energy (BLE) and control the color an RGB LED. This is an effort to save some time for newbies who are looking to get into BLE Development.
 
 # How to Run the App
 Clone the source code and open it in Android Studio. Connect an Android BLE Compatible device (Make sure to turn on USB Debugging on the phone) and run the application.
@@ -9,12 +9,18 @@ Download or clone [this](https://github.com/hammad1201/ESP32_BLE_UART_RGB_LED) r
 
 ## Esp32 Connections
 Connect an Common Cathode RGB LED to esp32 as:
+
 Red Pin ===> 13
+
 Cathode Pin ===> GND
+
 Green Pin ===> 12
+
 Blue Pin ===> 14
 
+
 This is the pinout of a common Cathode RGB LED.
+
 ![Common Cathode RGB LED](https://github.com/hammad1201/Images/blob/main/Common%20Cathode.jpg)
 
 # Images
