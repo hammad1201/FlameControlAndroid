@@ -2,11 +2,9 @@ package com.fivevoltslab.flamecontrol;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,20 +14,17 @@ import java.util.List;
 
 
 /**
- * Created by anupamchugh on 09/02/16.
+ * Created by Hammad.
  */
 public class DeviceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private List<BluetoothDevice> dataSet;
+    private final List<BluetoothDevice> dataSet;
     Context mContext;
     int total_types;
-    private OnClickListenerScanDevice onClickListener;
-
+    private final OnClickListenerScanDevice onClickListener;
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-
         TextView deviceNameTextView, macAddressTextView;
-        ImageView deleteImageView;
         OnClickListenerScanDevice onClickListener;
 
         public ViewHolder(View itemView, OnClickListenerScanDevice onClickListener) {
@@ -38,16 +33,12 @@ public class DeviceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             this.macAddressTextView = itemView.findViewById(R.id.macAddressTextView);
             this.onClickListener = onClickListener;
             itemView.setOnClickListener(this);
-//            this.deleteImageView = itemView.findViewById(R.id.deleteImgView);
         }
-
 
         @Override
         public void onClick(View view) {
             onClickListener.onItemClick(getAdapterPosition());
         }
-
-
     }
 
 
@@ -57,7 +48,6 @@ public class DeviceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         this.onClickListener = onClickListener;
         total_types = dataSet.size();
     }
-
 
     @NonNull
     @Override
@@ -70,24 +60,12 @@ public class DeviceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int listPosition) {
 
-        try {
-
-//            Product product = dataSet.get(listPosition);
-            ((ViewHolder) holder).deviceNameTextView.setText(dataSet.get(listPosition).getName());
-            Log.i("NAME", dataSet.get(listPosition).getName());
-            Log.i("ADDRESS", dataSet.get(listPosition).getAddress());
-            ((ViewHolder) holder).macAddressTextView.setText(dataSet.get(listPosition).getAddress());
-
-//            byte[] image = product.getImage();
-//            Bitmap bmp = BitmapFactory.decodeByteArray(image, 0, image.length);
-//                ((ViewHolder) holder).imageView.setImageBitmap(Bitmap.createScaledBitmap(bmp, 100,
-//                        100, false));
-//            ((ViewHolder) holder).imageView.setImageBitmap(bmp);
-
-
-        } catch (Exception e) {
-
+        String name = dataSet.get(listPosition).getName();
+        if (name == null) {
+            name = "No Name";
         }
+        ((ViewHolder) holder).deviceNameTextView.setText(name);
+        ((ViewHolder) holder).macAddressTextView.setText(dataSet.get(listPosition).getAddress());
 
     }
 

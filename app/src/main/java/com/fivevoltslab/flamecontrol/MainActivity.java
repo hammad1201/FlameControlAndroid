@@ -13,10 +13,13 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,14 +42,12 @@ import com.skydoves.colorpickerview.ActionMode;
 import com.skydoves.colorpickerview.ColorPickerView;
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener;
 
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
-    String hexColor;
-    String hexColorStringForSending = "#FFFFFF";
-
-    String hexColorStringForToast;
+    float red = 255, green = 255, blue = 255;
 
     Toolbar mainActivityToolbar;
     private Menu menu;
@@ -54,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_SELECT_DEVICE = 1;
     private static final int REQUEST_ENABLE_BT = 2;
     private static final int REQUEST_ACCESS_FINE_LOCATION = 3;
+
+    private LocationManager locationManager;
 
     public static final String TAG = "MainActivity";
     private static final int UART_PROFILE_CONNECTED = 20;
@@ -69,19 +72,10 @@ public class MainActivity extends AppCompatActivity {
     ImageView blinkImgView;
     Animation animation;
 
-    SharedPreferences sharedPreferences;
-    private Button brightnessButton;
-    private static final String BRIGHTNESS_PREF_KEY = "brightness_key";
-    private int brightnessValue;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBtAdapter == null) {
@@ -89,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         service_init();
 
@@ -98,74 +94,29 @@ public class MainActivity extends AppCompatActivity {
         sendButton = findViewById(R.id.fab);
         sendButton.setOnClickListener(view -> {
             if (mState == UART_PROFILE_DISCONNECTED) {
-                Snackbar.make(view, "Please connect to a device", Snackbar.LENGTH_SHORT)
+                Snackbar.make(view, "Please connect to a device.", Snackbar.LENGTH_SHORT)
                         .setAction("Action", null).show();
 
             } else {
                 sendColorCode();
-
             }
-
-
         });
 
         blinkImgView = findViewById(R.id.blinkImgView);
 
-
         ColorPickerView colorPickerView = findViewById(R.id.colorPick);
-        colorPickerView.setPaletteDrawable(Objects.requireNonNull(getDrawable(R.drawable.colorful_flower)));
+        colorPickerView.setPaletteDrawable(Objects.requireNonNull(getResources().getDrawable(R.drawable.colorful_flower)));
         colorPickerView.setActionMode(ActionMode.LAST);
         colorPickerView.setColorListener((ColorEnvelopeListener) (envelope, fromUser) -> {
-
-            hexColor = String.format("#%06X", (0xFFFFFF & envelope.getColor()));
-
-            hexColorStringForToast = String.format("#%06X", (0xFFFFFF & envelope.getColor()));
+            int[] color = envelope.getArgb();
+            red = color[1];
+            green = color[2];
+            blue = color[3];
 
             mainActivityToolbar.setBackgroundColor(envelope.getColor());
         });
 
         startBlinkingImgView(); //Start blinking Red Circle in ImageView
-
-        brightnessButton = findViewById(R.id.brightnessButton);
-
-        if (sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, -1) != -1) {
-            switch (sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, -1)) {
-                case 1:
-                    brightnessButton.setText(R.string.brightness_low);
-                    break;
-                case 2:
-                    brightnessButton.setText(R.string.brightness_medium);
-                    break;
-                case 3:
-                    brightnessButton.setText(R.string.brightness_high);
-                    break;
-            }
-        } else {
-            brightnessButton.setText(R.string.brightness_high);
-            sharedPreferences.edit().putInt(BRIGHTNESS_PREF_KEY, 3).apply();
-
-        }
-
-        brightnessButton.setOnClickListener(v -> {
-            if (sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, -1) == 3) {
-                brightnessValue = 2;
-                brightnessButton.setText(R.string.brightness_medium);
-            } else if (sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, -1) == 2) {
-                brightnessValue = 1;
-                brightnessButton.setText(R.string.brightness_low);
-            } else if (sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, -1) == 1) {
-                brightnessValue = 3;
-                brightnessButton.setText(R.string.brightness_high);
-            }
-            sharedPreferences.edit().putInt(BRIGHTNESS_PREF_KEY, brightnessValue).apply();
-        });
-
-        /***
-         1 = LOW
-         2 = MEDIUM
-         3 = HIGH
-         */
-
     }
 
     @Override
@@ -182,10 +133,9 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.menu_flame) {
 
             if (mState == UART_PROFILE_DISCONNECTED) {
-                showMessage("Please connect to a device", Toast.LENGTH_SHORT);
+                showMessage("Please connect to a device.", Toast.LENGTH_SHORT);
 
             } else {
-                Log.d(TAG, "Color: " + hexColorStringForSending);
                 sendColorCode();
             }
 
@@ -209,6 +159,8 @@ public class MainActivity extends AppCompatActivity {
 
                 if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_ACCESS_FINE_LOCATION);
+                } else if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    MainActivity.this.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                 } else {
                     if (mState != UART_PROFILE_CONNECTED) {
                         Intent newIntent = new Intent(MainActivity.this, ScanDeviceActivity.class);
@@ -220,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
-
             }
 
             return true;
@@ -235,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder rawBinder) {
             mService = ((UartService.LocalBinder) rawBinder).getService();
 
@@ -244,8 +195,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Unable to initialize Bluetooth");
                 finish();
             }
-
-
         }
 
         public void onServiceDisconnected(ComponentName classname) {
@@ -255,19 +204,11 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void sendColorCode() {
-        int brightnessValue = 3;
-        if (sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, -1) != -1) {
-            brightnessValue = sharedPreferences.getInt(BRIGHTNESS_PREF_KEY, 3);
-
-        }
-        hexColorStringForSending = "{\"hex_color\":\"" + hexColor + "\",\"b\":\"" + brightnessValue + "\" }";
-
+        String colorForSending = "{\"red\":\"" + red + "\"" + ",\"green\":\"" + green + "\"" +
+                ",\"blue\":\"" + blue + "\"" + "}";
         byte[] hexColorByte;
-        hexColorByte = hexColorStringForSending.getBytes(StandardCharsets.UTF_8);
+        hexColorByte = colorForSending.getBytes(StandardCharsets.UTF_8);
         mService.writeRXCharacteristic(hexColorByte);
-        Toast.makeText(MainActivity.this, "Color: \"" + hexColorStringForToast + "\" sent!", Toast.LENGTH_SHORT).show();
-
-
     }
 
     private void startBlinkingImgView() {
@@ -284,27 +225,17 @@ public class MainActivity extends AppCompatActivity {
         animation.cancel();
     }
 
-    private Handler mHandler = new Handler() {
-        @Override
-
-        //Handler events that received from UART service
-        public void handleMessage(Message msg) {
-
-        }
-    };
-
     private final BroadcastReceiver UARTStatusChangeReceiver = new BroadcastReceiver() {
 
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
-            final Intent mIntent = intent;
             //*********************//
             if (action.equals(UartService.ACTION_GATT_CONNECTED)) {
                 runOnUiThread(() -> {
                     Log.d(TAG, "UART_CONNECT_MSG");
                     mState = UART_PROFILE_CONNECTED;
-                    menu.getItem(1).setIcon(getDrawable(R.drawable.connect_icon_red));
+                    menu.getItem(1).setIcon(getResources().getDrawable(R.drawable.connect_icon_red));
                     stopBlinkingImgView(); //Stop blinking Red Circle in ImageView
                     showMessage("Connected to " + deviceAddress + ".", Toast.LENGTH_SHORT);
                 });
@@ -316,11 +247,10 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "UART_DISCONNECT_MSG");
                     mState = UART_PROFILE_DISCONNECTED;
                     mService.close();
-                    menu.getItem(1).setIcon(getDrawable(R.drawable.connect_icon_white));
+                    menu.getItem(1).setIcon(getResources().getDrawable(R.drawable.connect_icon_white));
                     startBlinkingImgView(); //Start blinking Red Circle in ImageView
                 });
             }
-
 
             //*********************//
             if (action.equals(UartService.ACTION_GATT_SERVICES_DISCOVERED)) {
@@ -332,10 +262,7 @@ public class MainActivity extends AppCompatActivity {
                 final byte[] txValue = intent.getByteArrayExtra(UartService.EXTRA_DATA);
                 runOnUiThread(() -> {
                     try {
-
-
                         String text = new String(txValue, StandardCharsets.UTF_8);
-
                         Log.d(TAG, "" + text);
 
 
@@ -351,8 +278,6 @@ public class MainActivity extends AppCompatActivity {
                 showMessage("Device doesn't support UART. Disconnecting", Toast.LENGTH_SHORT);
                 mService.disconnect();
             }
-
-
         }
     };
 
@@ -386,8 +311,8 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(UARTStatusChangeReceiver);
-        } catch (Exception ignore) {
-            Log.e(TAG, ignore.toString());
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
         }
         unbindService(mServiceConnection);
         mService.stopSelf();

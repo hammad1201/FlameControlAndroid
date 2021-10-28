@@ -38,17 +38,13 @@ public class ScanDeviceActivity extends AppCompatActivity {
     public static final String TAG = "ScanDeviceActivity";
 
     List<BluetoothDevice> deviceList;
-    private static final long SCAN_PERIOD = 4500; //scanning for 4.5 seconds
+    private static final long SCAN_PERIOD = 3000; //scanning for 4.5 seconds
     private Handler mHandler;
 
     public static RecyclerView availableDeviceRecyclerView;
     public static RecyclerView pairedDeviceRecyclerView;
 
-
     private TextView scanningTextView;
-    private FloatingActionButton scanAgainFab;
-
-
     BluetoothLeScanner bluetoothLeScanner;
 
     DeviceAdapter availableDeviceAdapter;
@@ -73,7 +69,7 @@ public class ScanDeviceActivity extends AppCompatActivity {
 
         scanningTextView = findViewById(R.id.scanningTextView);
 
-        scanAgainFab = findViewById(R.id.scanAgainFloatingActionButton);
+        FloatingActionButton scanAgainFab = findViewById(R.id.scanAgainFloatingActionButton);
         scanAgainFab.setOnClickListener(view -> populateAvailableDevicesRecView());
 
         mHandler = new Handler();
@@ -98,8 +94,6 @@ public class ScanDeviceActivity extends AppCompatActivity {
 
         populateAvailableDevicesRecView();
         populatePairedDevicesRecView();
-
-
     }
 
     @Override
@@ -149,7 +143,7 @@ public class ScanDeviceActivity extends AppCompatActivity {
                 pairedDeviceRecyclerView.setLayoutManager(layoutManager);
                 pairedDeviceRecyclerView.setAdapter(pairedDeviceAdapter);
                 DividerItemDecoration decoration = new DividerItemDecoration(getApplicationContext(), VERTICAL);
-                decoration.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.divider)));
+                decoration.setDrawable(Objects.requireNonNull(getResources().getDrawable(R.drawable.divider)));
                 pairedDeviceRecyclerView.addItemDecoration(decoration);
 
             }
@@ -186,7 +180,7 @@ public class ScanDeviceActivity extends AppCompatActivity {
                 availableDeviceRecyclerView.setLayoutManager(layoutManager);
                 availableDeviceRecyclerView.setAdapter(availableDeviceAdapter);
                 DividerItemDecoration decoration = new DividerItemDecoration(getApplicationContext(), VERTICAL);
-                decoration.setDrawable(Objects.requireNonNull(getDrawable(R.drawable.divider)));
+                decoration.setDrawable(Objects.requireNonNull(getResources().getDrawable(R.drawable.divider)));
                 availableDeviceRecyclerView.addItemDecoration(decoration);
 
 
@@ -201,7 +195,7 @@ public class ScanDeviceActivity extends AppCompatActivity {
     }
 
 
-    private ScanCallback mLeScanCallback = new ScanCallback() {
+    private final ScanCallback mLeScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             addDevice(result.getDevice(), result.getRssi());

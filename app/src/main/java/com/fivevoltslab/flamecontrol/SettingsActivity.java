@@ -28,8 +28,6 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         this.instance = this;
-
-
     }
 
     public static SettingsActivity getInstance() {
@@ -77,23 +75,5 @@ public class SettingsActivity extends AppCompatActivity {
             builder.create();
             builder.show();
         }
-
-
-    }
-
-    public void gmailIntentOnClick(View view) {
-        try {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            String[] strTo = {view.getTag().toString()};
-            intent.putExtra(Intent.EXTRA_EMAIL, strTo);
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Subject");
-            intent.putExtra(Intent.EXTRA_TEXT, "Body");
-            intent.setType("message/rfc822");
-            intent.setPackage("com.google.android.gm");
-            startActivity(intent);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 }

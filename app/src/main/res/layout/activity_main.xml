@@ -30,6 +30,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         app:backgroundTint="#FFFFFF"
-        app:srcCompat="@drawable/flame_icon_button" />
+        app:srcCompat="@drawable/flame_icon_button"
+        tools:ignore="SpeakableTextPresentCheck" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
